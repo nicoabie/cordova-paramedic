@@ -19,7 +19,8 @@ var USAGE = "Error missing args. \n" +
 	"--justbuild : (optional) just builds the project, without running the tests \n" +
     "--browserify : (optional) plugins are browserified into cordova.js \n" +
     "--verbose : (optional) verbose mode. Display more information output\n" +
-    "--platformPath : (optional) path to install platform from, git or local file uri";
+    "--platformPath : (optional) path to install platform from, git or local file uri\n" +
+    "--tempPath : (optional) path to temporal folder";
 
 var argv = parseArgs(process.argv.slice(2));
 
@@ -39,5 +40,5 @@ var onComplete = function(resCode,resObj,logStr) {
 	process.exit(resCode);
 };
 
-paramedic.run(argv.platform, argv.plugin, onComplete, argv.justbuild, argv.port, argv.timeout, argv.browserify, false, argv.verbose, argv.platformPath);
+paramedic.run(argv.platform, argv.plugin, onComplete, argv.justbuild, argv.port, argv.timeout, argv.browserify, false, argv.verbose, argv.platformPath, argv.tempPath);
 

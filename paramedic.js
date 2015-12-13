@@ -14,17 +14,26 @@ var TIMEOUT = 10 * 60 * 1000; // 10 minutes in msec - this will become a param
 
 
 
-function ParamedicRunner(_platformId,_plugins,_callback,bJustBuild,nPort,msTimeout,browserify,bSilent,bVerbose,platformPath) {
+function ParamedicRunner(_platformId,_plugins,_callback,bJustBuild,nPort,msTimeout,browserify,bSilent,bVerbose,platformPath,tempPath,storedCWD) {
     this.tunneledUrl = "";
     this.port = nPort;
     this.justBuild = bJustBuild;
     this.plugins = _plugins;
     this.platformId = _platformId;
     this.callback = _callback;
-    this.tempFolder = null;
     this.timeout = msTimeout;
     this.verbose = bVerbose;
     this.platformPath = platformPath;
+    this.tempPath = null;
+    this.storedCWD = storedCWD;
+    this.tempPathProvided = !!tempPath;
+
+    if(this.tempPathProvided){
+        this.tempPath = path.resolve(this.storedCWD, tempPath);
+    } else {
+        this.tempPath = tmp.dirSync().name;
+        tmp.setGracefulCleanup();
+    }
 
     if(browserify) {
         this.browserify = "--browserify";
@@ -66,11 +75,13 @@ ParamedicRunner.prototype = {
         this.startServer();
     },
     createTempProject: function() {
-        this.tempFolder = tmp.dirSync();
-        tmp.setGracefulCleanup();
-        this.logMessage("cordova-paramedic: creating temp project at " + this.tempFolder.name);
-        shell.exec('cordova create ' + this.tempFolder.name,{silent:!this.verbose});
-        shell.cd(this.tempFolder.name);
+        var cordovaCreateCmd = shell.exec('cordova create ' + this.tempPath,{silent:!this.verbose});
+        if(cordovaCreateCmd.code !== 0) {
+            this.logMessage("cordova-paramedic: reusing temp project at " + this.tempPath);
+        } else {
+            this.logMessage("cordova-paramedic: creating temp project at " + this.tempPath);
+        }
+        shell.cd(this.tempPath);
     },
     installSinglePlugin: function(plugin) {
         this.logMessage("cordova-paramedic: installing " + plugin);
@@ -103,7 +114,9 @@ ParamedicRunner.prototype = {
     cleanUpAndExitWithCode: function(exitCode,resultsObj) {
         shell.cd(this.storedCWD);
         // the TMP_FOLDER.removeCallback() call is throwing an exception, so we explicitly delete it here
-        shell.exec('rm -rf ' + this.tempFolder.name);
+        if(!this.tempPathProvided){
+            shell.exec('rm -rf ' + this.tempPath);
+        }
         var logStr = this.logOutput ? this.logOutput.join("\n") : null;
         this.callback(exitCode,resultsObj,logStr);
     },
@@ -278,7 +291,7 @@ ParamedicRunner.prototype = {
 
 var storedCWD =  null;
 
-exports.run = function(_platformId,_plugins,_callback,bJustBuild,nPort,msTimeout,bBrowserify,bSilent,bVerbose,platformPath) {
+exports.run = function(_platformId,_plugins,_callback,bJustBuild,nPort,msTimeout,bBrowserify,bSilent,bVerbose,platformPath,tempPath) {
 
     storedCWD = storedCWD || process.cwd();
     if(!_plugins) {
@@ -296,9 +309,8 @@ exports.run = function(_platformId,_plugins,_callback,bJustBuild,nPort,msTimeout
         };
 
         var runner = new ParamedicRunner(_platformId, plugins, callback, !!bJustBuild,
-                                         nPort || PORT, msTimeout || TIMEOUT, !!bBrowserify, !!bSilent, !!bVerbose, platformPath);
+                                         nPort || PORT, msTimeout || TIMEOUT, !!bBrowserify, !!bSilent, !!bVerbose, platformPath, tempPath, storedCWD);
 
-        runner.storedCWD = storedCWD;
         return runner.run();
     }
     else {
