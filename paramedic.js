@@ -102,12 +102,15 @@ ParamedicRunner.prototype = {
         }
 
         if(!this.justBuild) {
-            this.logMessage("cordova-paramedic: installing plugin-test-framework");
-            var plugAddCmd = shell.exec('cordova plugin add https://github.com/apache/cordova-plugin-test-framework',
+            var plugListCmd = shell.exec("cordova plugin list");
+            if(plugListCmd.output.indexOf("cordova-plugin-test-framework") === -1){
+                this.logMessage("cordova-paramedic: installing plugin-test-framework");
+                var plugAddCmd = shell.exec('cordova plugin add https://github.com/apache/cordova-plugin-test-framework',
                                          {silent:!this.verbose});
-            if(plugAddCmd.code !== 0) {
-                this.logMessage('cordova-plugin-test-framework');
-                this.cleanUpAndExitWithCode(1);
+                if(plugAddCmd.code !== 0) {
+                    this.logMessage('cordova-plugin-test-framework');
+                    this.cleanUpAndExitWithCode(1);
+                }
             }
         }
     },
