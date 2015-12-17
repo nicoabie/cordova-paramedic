@@ -84,9 +84,17 @@ ParamedicRunner.prototype = {
         shell.cd(this.tempPath);
     },
     installSinglePlugin: function(plugin) {
-        this.logMessage("cordova-paramedic: installing " + plugin);
+        var pluginRegex = /Plugin "(.*)" already installed/;
         var pluginPath = path.resolve(this.storedCWD, plugin);
         var plugAddCmd = shell.exec('cordova plugin add ' + pluginPath, {silent:!this.verbose});
+        if (pluginRegex.test(plugAddCmd.output)){
+            var pluginId = plugAddCmd.output.match(/Plugin "(.*)" already installed/)[1];
+            this.logMessage("cordova-paramedic: reinstalling " + pluginId);    
+            shell.exec('cordova plugin rm ' + pluginId, {silent:!this.verbose});
+        } else {
+            this.logMessage("cordova-paramedic: installing " + plugin);    
+        }
+        plugAddCmd = shell.exec('cordova plugin add ' + pluginPath, {silent:!this.verbose});
         if(plugAddCmd.code !== 0) {
             this.logMessage('Failed to install plugin : ' + plugin);
             this.cleanUpAndExitWithCode(1);
@@ -102,7 +110,7 @@ ParamedicRunner.prototype = {
         }
 
         if(!this.justBuild) {
-            var plugListCmd = shell.exec("cordova plugin list");
+            var plugListCmd = shell.exec("cordova plugin", {silent:!this.verbose});    
             if(plugListCmd.output.indexOf("cordova-plugin-test-framework") === -1){
                 this.logMessage("cordova-paramedic: installing plugin-test-framework");
                 var plugAddCmd = shell.exec('cordova plugin add https://github.com/apache/cordova-plugin-test-framework',
