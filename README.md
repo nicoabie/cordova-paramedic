@@ -24,6 +24,8 @@ cordova-paramedic --platform PLATFORM --plugin PATH [--justbuild --timeout MSECS
 --justbuild : (optional) just builds the project, without running the tests 
 --browserify : (optional) plugins are browserified into cordova.js 
 --verbose : (optional) verbose mode. Display more information output
+--platformPath : (optional) path to install platform from, git or local file uri
+--tempPath : (optional) path to temporal folder
 
 ```
 
@@ -31,7 +33,7 @@ You can also use cordova-paramedic as a module directly :
 
 ```
   var paramedic = require('cordova-paramedic');
-  paramedic.run('ios', '../cordova-plugin-device', onCompleteCallback,justBuild,portNum,msTimeout, useBrowserify, beSilent, beVerbose);
+  paramedic.run('ios', '../cordova-plugin-device', onCompleteCallback,justBuild,portNum,msTimeout, useBrowserify, beSilent, beVerbose, platformPath, tempPath);
 ```
 
 
